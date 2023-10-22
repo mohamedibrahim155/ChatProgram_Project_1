@@ -16,6 +16,7 @@ Instruction to Chat System.
 2. you can open mulitple TCPClient.exe 
 3. enter your name as letters
 4. enter your room ID as numbers
+5. you can type for messages
 
 If multiple users chatting cases : 
 
@@ -26,3 +27,6 @@ type "/joinroom" to join in a new room, then the cosole will ask for a new roomI
 type "/leaveroom" to leave the room , then the cosole will ask for a new roomID to enter and chat in the new room. 
 this work similar as join room but messages for the left room and join room will be different
 
+Git Link : https://github.com/mohamedibrahim155/ChatProgram_Project_1.git
+
+Project demo link : https://www.youtube.com/watch?v=bbR4ZcwnJz4
