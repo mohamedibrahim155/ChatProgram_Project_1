@@ -26,6 +26,9 @@ bool isfirstTime =true;
 std::atomic<bool> isLeftRoom = true;
 bool isNewRoomJoined = true;
 void ClientLeftRoom();
+
+
+// Fucntion helps to find if there is any empty spaces 
 bool isStringEmptyOrWhitespace(const std::string& str) {
     // Check if the string is empty
     if (str.empty()) {
@@ -37,25 +40,11 @@ bool isStringEmptyOrWhitespace(const std::string& str) {
         });
 }
 
-bool ContainsLeave(const std::string& message)
-{
-    std::string substringToCheck = "/leave";
 
-    // Check if the string contains the substring "/leave" after trimming leading and trailing whitespaces
-    size_t startPos = message.find_first_not_of(" \t");
-    size_t endPos = message.find_last_not_of(" \t");
-
-    if (startPos != std::string::npos && endPos != std::string::npos)
-    {
-        std::string trimmedMessage = message.substr(startPos, endPos - startPos + 1);
-        return trimmedMessage.find(substringToCheck) != std::string::npos;
-    }
-    else
-    {
-        return false;
-    }
-}
-
+/// <summary>
+/// This function receive every messages from the server in a separate thread and displays
+/// </summary>
+/// <param name="sock"></param>
 void ReceiveMessages(SOCKET sock)
 {
 
@@ -81,51 +70,14 @@ void ReceiveMessages(SOCKET sock)
                 Client_ID ID = recevieBuffer.ReadClientID();
                 receivedMsg = *static_cast<std::string*>(ReceiveMyMessage.messageToLoad);
                
-               //if (receivedMsg == " has left room")
-               // {
-               //     std::cout << "[" << ID.ClientName << "]" << " : " << receivedMsg << std::endl;
-
-               //     
-               // }
-               // if (receivedMsg == " joined  new room")
-               // {
-               //     std::cout << "[" << ID.ClientName << "]" << " : " << "joined new Room" << std::endl;
-               //    
-               // }
-               // if (receivedMsg == " has joined room")
-               // {
-               //     std::cout << "[" << ID.ClientName << "]" << " : " << "has joined room" << std::endl;
-               // }
-
-               /* if (ID.RoomID == roomId && !receivedMsg.empty() && !isStringEmptyOrWhitespace(receivedMsg))
+                if (!receivedMsg.empty() && !isStringEmptyOrWhitespace(receivedMsg))
                 {
+
+
                     std::cout << "[" << ID.ClientName << "]" << " : " << receivedMsg << std::endl;
-                }*/
-                /*else if (receivedMsg == "Joined")
-                {
 
-                    std::cout << "[" << ID.ClientName << "]" << " : " << "joined Room" << std::endl;
 
-                }*/
-                /*else*/ if (!receivedMsg.empty() && !isStringEmptyOrWhitespace(receivedMsg))
-                {
-                   /* if (receivedMsg=="/leaveroom")
-                    {
-                        std::cout << "[" << ID.ClientName << "]" << " : " << "has left room" << std::endl;
-                    }
-                    if (receivedMsg == "/joinroom")
-                    {
-                        std::cout << "[" << ID.ClientName << "]" << " : " << "has joined room" << std::endl;
-                    }*/
-                    //else
-                    {
-                        std::cout << "[" << ID.ClientName << "]" << " : " << receivedMsg << std::endl;
-
-                    }
                 }
-
-
-
 
             }
             if (bytesReceived == 0)
@@ -136,7 +88,10 @@ void ReceiveMessages(SOCKET sock)
 }
 
 
-
+/// <summary>
+/// This function reads the
+/// </summary>
+/// <param name="serverSocket"></param>
 void readConsoleEntriesAndSendToServer(SOCKET serverSocket);
 
 
@@ -199,10 +154,6 @@ int main()
             WSACleanup();
             return 0;
         }
-        else
-        {
-            
-        }
         break;
     }
 
@@ -216,8 +167,12 @@ int main()
     printf("connected to server Successfully in client\n");
 
 
+
+
+    //Receives messages from server in thread
     std::thread receiveThread(ReceiveMessages, ConnectSocket);
 
+    //sends messages to server
         readConsoleEntriesAndSendToServer(ConnectSocket);
 
         if (receiveThread.joinable())
@@ -242,6 +197,8 @@ int main()
     return 0;
 }
 
+
+//if user types /joinroom in the next step, taking the input for Entering ROOM id
 void JoinAnotherRoom()
 {
     if (!isNewRoomJoined)
@@ -253,6 +210,7 @@ void JoinAnotherRoom()
    
 }
 
+//if user types /leaveroom in the next step, taking the input for Entering ROOM id and diplaying player has left
 void ClientLeftRoom()
 {
     if (!isLeftRoom)
@@ -261,7 +219,6 @@ void ClientLeftRoom()
         roomId = 0;
         std::cin >> roomId;
         isLeftRoom = true;
-        std::cout << "isFalse from received " << " : " << isLeftRoom << std::endl;
 
     }
 }
@@ -273,6 +230,7 @@ void readConsoleEntriesAndSendToServer(SOCKET serverSocket)
     
     while (isRunning)
     {
+
         if (previosuSentMsg.length()>0 && previosuSentMsg == "/leaveroom")
         {
             isLeftRoom = false;
@@ -284,7 +242,7 @@ void readConsoleEntriesAndSendToServer(SOCKET serverSocket)
             SendMyMessage.packetSize;
             SendMyMessage.messageType = STRING;
             // std::string MessageSending = /*"[" + ID.ClientName + "]" + " : " +*/ userInput;
-            std::string MessageSending = /*"[" + ID.ClientName + "]" + " : " +*/ "has left room\n";
+            std::string MessageSending = /*"[" + ID.ClientName + "]" + " : " +*/ "has joined room\n";
             SendMyMessage.messageLength;
             SendMyMessage.messageToLoad = &MessageSending;
 
@@ -311,7 +269,6 @@ void readConsoleEntriesAndSendToServer(SOCKET serverSocket)
             ChatMessage SendMyMessage;
             SendMyMessage.packetSize;
             SendMyMessage.messageType = STRING;
-           // std::string MessageSending = /*"[" + ID.ClientName + "]" + " : " +*/ userInput;
             std::string MessageSending = /*"[" + ID.ClientName + "]" + " : " +*/ "has joined room\n";
             SendMyMessage.messageLength;
             SendMyMessage.messageToLoad = &MessageSending;
@@ -340,6 +297,7 @@ void readConsoleEntriesAndSendToServer(SOCKET serverSocket)
         SendMyMessage.packetSize;
         SendMyMessage.messageType = STRING;
 
+        //trying to handle states by players input
         if (isStringEmptyOrWhitespace(userInput) && isfirstTime)
         {
             isfirstTime = false;

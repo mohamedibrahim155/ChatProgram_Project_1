@@ -36,35 +36,21 @@ bool ContainsLeave(const std::string& message);
   void  ReceiveAndPrintIncomingMessage(SOCKET clientSocket);
   void ReceiveAndPrintIncomingMessageOnSeparateThread(SOCKET clientSocket);
   void RemoveSocketInRoom( SOCKET clientSocket);
+  void SendReceivedMessageToTheOtherClientsBaseOnRoomID(int _RoomId, std::vector<uint8_t>& recvBuffer, ChatMessage& _receivedMsg, Client_ID& clientId, SOCKET clientSocket);
 
-void ReceiveMessagesFromClient(SOCKET clientSocket) 
-{
-    char recvBuffer[DEFAULT_BUFLEN];
-    while (true) 
-    {
-        std::string receivedMsg;
-        std::uint32_t receivedMsgNumber32 = 0;
-        std::uint16_t receivedMsgNumber16 = 0;
-        const int buffersize = DEFAULT_BUFLEN;
-        Buffer recevieBuffer(buffersize);
-        std::vector<uint8_t> recvBuffer(buffersize);
-        ChatMessage receivedGlobal;
-        int receivedBytes = recv(clientSocket, reinterpret_cast<char*>(&recvBuffer[0]), buffersize, 0);
-        if (receivedBytes > 0)
-        {
-            recevieBuffer.m_BufferData = recvBuffer;
-            recevieBuffer.m_ReadIndex = 0;
-            ChatMessage ReceiveMyMessage = recevieBuffer.ReadChatMessage();
-            receivedMsg = *static_cast<std::string*>(ReceiveMyMessage.messageToLoad);
-            std::lock_guard<std::mutex> lock(_messageQueueMutex);
-            _messageQueue.push(receivedMsg);
-            _messageArrived.notify_one();
-        }
-        // Handle other cases
-    }
-}
-void SendReceivedMessageToTheOtherClientsBaseOnRoomID(int _RoomId, std::vector<uint8_t>& recvBuffer, ChatMessage& _receivedMsg, Client_ID& clientId, SOCKET clientSocket);
 
+
+
+
+
+
+
+
+/// <summary>
+/// checks the string is empty or has white spaces alone
+/// </summary>
+/// <param name="str"></param>
+/// <returns></returns>
 bool isStringEmptyOrWhitespace(const std::string& str) 
 {
     // Check if the string is empty
@@ -78,6 +64,11 @@ bool isStringEmptyOrWhitespace(const std::string& str)
             return std::isspace(ch);
         });
 }
+
+/// <summary>
+/// Accepting the clients to this server
+/// </summary>
+/// <param name="serverSocket"></param>
 void AcceptClientConnections(SOCKET serverSocket)
 {
     while (true)
@@ -198,12 +189,23 @@ int  main(void)
 }
 
 
+
+/// <summary>
+/// after the client accepted to the server, adding all the receive messages in a seperate thread
+/// </summary>
+/// <param name="clientSocket"></param>
 void ReceiveAndPrintIncomingMessageOnSeparateThread(SOCKET clientSocket)
 {
     clientSockets.push_back(clientSocket);
     std::thread clientThread(ReceiveAndPrintIncomingMessage, clientSocket);
     clientThreads.push_back(std::move(clientThread));
 }
+
+/// <summary>
+/// adding Clients sockets to the map based on the roomID
+/// </summary>
+/// <param name="roomID"></param>
+/// <param name="clientSocket"></param>
 void AddSocketToRoom(int roomID, SOCKET clientSocket)
 {
     auto it = ClientsInRoomID.find(roomID);
@@ -223,6 +225,11 @@ void AddSocketToRoom(int roomID, SOCKET clientSocket)
     }
 }
 
+
+/// <summary>
+/// removing the socket in the map based on roomID
+/// </summary>
+/// <param name="clientSocket"></param>
 void RemoveSocketInRoom(SOCKET clientSocket)
 {
 
@@ -241,6 +248,12 @@ void RemoveSocketInRoom(SOCKET clientSocket)
   
 
 }
+
+
+/// <summary>
+/// this function receives the incoming messages and added a map containing roomID and clientsocket
+/// </summary>
+/// <param name="clientSocket"></param>
 void ReceiveAndPrintIncomingMessage(SOCKET clientSocket)
 {
     const int buffersize = DEFAULT_BUFLEN;
@@ -293,26 +306,11 @@ void ReceiveAndPrintIncomingMessage(SOCKET clientSocket)
     }
     closesocket(clientSocket);
 }
-bool ContainsLeave(const std::string& message)
-{
-    std::string substringToCheck = "/leave";
-
-    // Check if the string contains the substring "/leave" after trimming leading and trailing whitespaces
-    size_t startPos = message.find_first_not_of(" \t");
-    size_t endPos = message.find_last_not_of(" \t");
-
-    if (startPos != std::string::npos && endPos != std::string::npos)
-    {
-        std::string trimmedMessage = message.substr(startPos, endPos - startPos + 1);
-        return trimmedMessage.find(substringToCheck) != std::string::npos;
-    }
-    else 
-    {
-        return false; 
-    }
-}
 
 
+
+
+//Not used, used for testing
 void SendReceivedMessageToTheOtherClients(std::vector<uint8_t> &recvBuffer, ChatMessage& _receivedMsg, Client_ID& clientId, SOCKET clientSocket)
 {
     Buffer sendBuffer(DEFAULT_BUFLEN);
@@ -341,11 +339,21 @@ void SendReceivedMessageToTheOtherClients(std::vector<uint8_t> &recvBuffer, Chat
     }
 }
 
+
+/// <summary>
+/// This function sends the received messages from the client based on the roomID
+/// </summary>
+/// <param name="_RoomId"></param>
+/// <param name="recvBuffer"></param>
+/// <param name="_receivedMsg"></param>
+/// <param name="clientId"></param>
+/// <param name="clientSocket"></param>
 void SendReceivedMessageToTheOtherClientsBaseOnRoomID(int _RoomId, std::vector<uint8_t>& recvBuffer, ChatMessage& _receivedMsg, Client_ID& clientId, SOCKET clientSocket)
 {
     Buffer sendBuffer(DEFAULT_BUFLEN);
     std::string receivedMsg = *static_cast<std::string*>(_receivedMsg.messageToLoad);
 
+    //handleing the states and sending messages
     if (receivedMsg == "Joined")
     {
         receivedMsg = " has joined room";

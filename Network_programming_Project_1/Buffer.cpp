@@ -151,7 +151,7 @@ std::string  Buffer:: ReadString()
 }
 
 
-
+//Redaing based on the struct ChatMessage
 ChatMessage Buffer::ReadChatMessage()
 {
     ChatMessage temp;
@@ -190,6 +190,7 @@ ChatMessage Buffer::ReadChatMessage()
 }
 
 
+//Redaing based on the struct Client_ID
 Client_ID Buffer:: ReadClientID() 
 {
     Client_ID clientID;
